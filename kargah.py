@@ -1,3 +1,6 @@
+"""
+@author: h8hawk
+"""
 import telepot
 from telepot.namedtuple import InlineKeyboardButton, InlineKeyboardMarkup
 from telepot.namedtuple import KeyboardButton, ReplyKeyboardMarkup
