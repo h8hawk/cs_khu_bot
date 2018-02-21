@@ -1,10 +1,8 @@
-"""
-@author: h8hawk
-"""
-import telepot
-from telepot.namedtuple import InlineKeyboardButton, InlineKeyboardMarkup
-from telepot.namedtuple import KeyboardButton, ReplyKeyboardMarkup
-from telepot.loop import MessageLoop
+#@author : h8hawk
+
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
+from telegram.ext import MessageHandler, Filters, CommandHandler, CallbackQueryHandler, Updater, Dispatcher
+import telegram
 import sys
 import json
 import os
@@ -18,10 +16,7 @@ import datetime
 __location__ = os.path.realpath(
     os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-token = 'xxxx'
-
-bot = telepot.Bot(token)
-
+token = 'xxxxxx'
 
 #######################################################################################
 # First reply keyboard
@@ -108,7 +103,7 @@ sabtenam_list = sabtenam_text.split('\n')
 # iterator functor for registering
 
 
-def sabtenam_iterator(chat_id, kargah,  bot: telepot.Bot, db=db) -> Callable[[str], bool]:
+def sabtenam_iterator(chat_id, kargah,  bot: telegram.bot.Bot, db=db) -> Callable[[str], bool]:
     current = 0
     sabtenam_text = sabtenam_list[3:6]
     sabtenam_details = list()
@@ -119,7 +114,7 @@ def sabtenam_iterator(chat_id, kargah,  bot: telepot.Bot, db=db) -> Callable[[st
         nonlocal bot
         nonlocal current
         if current < len(sabtenam_text) - 1:
-            bot.sendMessage(chat_id, text=sabtenam_text[current])
+            bot.send_message(chat_id, text=sabtenam_text[current])
             current += 1
             sabtenam_details.append(recieved_text)
             return True
@@ -132,7 +127,7 @@ def sabtenam_iterator(chat_id, kargah,  bot: telepot.Bot, db=db) -> Callable[[st
                 'kargah': kargah,
                 'date': Gregorian(str(datetime.date.today())).persian_string()
             })
-            bot.sendMessage(
+            bot.send_message(
                 chat_id, text=sabtenam_details[0] + ', ' + sabtenam_text[-1])
             return False
     return iterrator
@@ -140,106 +135,95 @@ def sabtenam_iterator(chat_id, kargah,  bot: telepot.Bot, db=db) -> Callable[[st
 # handler for texts
 
 
-def text_handler(msg, chat_id):
+def text_handler(bot: telegram.bot.Bot, update: telegram.update.Update):
+    text = update.message.text
+    chat_id = update.message.chat_id
     # For /start
     global sabtenam_global_dict
-    if msg['text'] == '/start':
+    print(text)
+    if text == '/start':
         if chat_id in sabtenam_global_dict:
             sabtenam_global_dict.pop(chat_id)
-            bot.sendMessage(chat_id, sabtenam_list[6])
-        bot.sendMessage(chat_id=chat_id, text='hi',
-                        reply_markup=start_reply_keyboard)
+            bot.send_message(chat_id, sabtenam_list[6])
+        bot.send_message(chat_id=chat_id, text='hi',
+                         reply_markup=start_reply_keyboard)
 
     # For reply_text1 in start_reply_keyboard
-    elif msg['text'] == reply_text1:
+    elif text == reply_text1:
         if chat_id in sabtenam_global_dict:
             sabtenam_global_dict.pop(chat_id)
-            bot.sendMessage(chat_id, sabtenam_list[6])
-        bot.sendMessage(chat_id, text='About menu',
-                        reply_markup=about_keyboard)
+            bot.send_message(chat_id, sabtenam_list[6])
+        bot.send_message(chat_id, text='About menu',
+                         reply_markup=about_keyboard)
 
     # For
-    elif msg['text'] == reply_text2:
+    elif text == reply_text2:
         if chat_id in sabtenam_global_dict:
             sabtenam_global_dict.pop(chat_id)
-            bot.sendMessage(chat_id, sabtenam_list[6])
-        bot.sendMessage(chat_id, text='Courses list',
-                        reply_markup=courses_regiser_keyboard)
+            bot.send_message(chat_id, sabtenam_list[6])
+        bot.send_message(chat_id, text='Courses list',
+                         reply_markup=courses_regiser_keyboard)
 
     # For pressing back
-    elif msg['text'] == back:
+    elif text == back:
         if chat_id in sabtenam_global_dict:
             sabtenam_global_dict.pop(chat_id)
-            bot.sendMessage(chat_id, sabtenam_list[6])
-        bot.sendMessage(chat_id, text='Menu',
-                        reply_markup=start_reply_keyboard)
+            bot.send_message(chat_id, sabtenam_list[6])
+        bot.send_message(chat_id, text='Menu',
+                         reply_markup=start_reply_keyboard)
 
-    elif msg['text'] == about_keyboard_about_khu_cs:
+    elif text == about_keyboard_about_khu_cs:
         if chat_id in sabtenam_global_dict:
             sabtenam_global_dict.pop(chat_id)
-            bot.sendMessage(chat_id, sabtenam_list[6])
-        bot.sendMessage(chat_id, text=tozih_text)
+            bot.send_message(chat_id, sabtenam_list[6])
+        bot.send_message(chat_id, text=tozih_text)
 
-    elif msg['text'] == about_keyboard_list:
+    elif text == about_keyboard_list:
         if chat_id in sabtenam_global_dict:
             sabtenam_global_dict.pop(chat_id)
-            bot.sendMessage(chat_id, sabtenam_list[6])
-        bot.sendMessage(chat_id, text=about_keyboard_list,
-                        reply_markup=courses_overveiw_keyboard)
+            bot.send_message(chat_id, sabtenam_list[6])
+        bot.send_message(chat_id, text=about_keyboard_list,
+                         reply_markup=courses_overveiw_keyboard)
 
     if chat_id in sabtenam_global_dict:
-        if not sabtenam_global_dict[chat_id](msg['text']):
+        if not sabtenam_global_dict[chat_id](text):
             sabtenam_global_dict.pop(chat_id)
 
-# main handler for messages
-
-
-def handler(msg):
-    print(type(msg))
-    print(msg)
-    print(sabtenam_global_dict)
-    content_type, chat_type, chat_id = telepot.glance(msg)
-    print('message recieved: ', content_type)
-    if content_type == 'text':
-        print(msg, ' \n ,type: ', type(msg))
-        text_handler(msg, chat_id)
-    else:
-        if chat_id in sabtenam_global_dict:
-            sabtenam_global_dict.pop(chat_id)
 
 # handler for callback queries
 
 
-def on_callback_query(msg):
+def on_callback_query(bot: telegram.bot.Bot, update: telegram.update.Update):
     global sabtenam_global_dict
     print(sabtenam_global_dict)
-    query_id, from_id, query_data = telepot.glance(
-        msg, flavor='callback_query')
+    query = update.callback_query
+    chat_id, query_data = query.message.chat_id, query.data
     print('Callback Query:', query_data)
     if query_data in courses_overview_dict:
-        if from_id in sabtenam_global_dict:
-            sabtenam_global_dict.pop(from_id)
-            bot.sendMessage(from_id, sabtenam_list[6])
+        if chat_id in sabtenam_global_dict:
+            sabtenam_global_dict.pop(chat_id)
+            bot.send_message(chat_id, sabtenam_list[6])
         print(courses_overview_dict[query_data])
-        bot.sendMessage(from_id, text=courses_overview_dict[query_data])
+        bot.send_message(chat_id, text=courses_overview_dict[query_data])
     elif query_data in courses_register_dict:
-        if from_id in sabtenam_global_dict:
-            sabtenam_global_dict.pop(from_id)
-            bot.sendMessage(chat_id=from_id, text=sabtenam_list[6])
+        if chat_id in sabtenam_global_dict:
+            sabtenam_global_dict.pop(chat_id)
+            bot.send_message(chat_id=chat_id, text=sabtenam_list[6])
         print(courses_register_dict[query_data])
-        bot.sendMessage(
-            from_id, text=sabtenam_list[0] + ' ' + courses_register_dict[query_data] + ' ' + sabtenam_list[1])
-        bot.sendMessage(from_id, text=sabtenam_list[2])
-        sabtenam_global_dict[from_id] = sabtenam_iterator(
-            from_id, query_data[:-len('register')], bot=bot, db=db)
+        bot.send_message(
+            chat_id, text=sabtenam_list[0] + ' ' + courses_register_dict[query_data] + ' ' + sabtenam_list[1])
+        bot.send_message(chat_id, text=sabtenam_list[2])
+        sabtenam_global_dict[chat_id] = sabtenam_iterator(
+            chat_id, query_data[:-len('register')], bot=bot, db=db)
         print(sabtenam_global_dict)
-    bot.answerCallbackQuery(query_id, text='Got it')
 
 
 if __name__ == '__main__':
-    MessageLoop(bot, {'chat': handler,
-                      'callback_query': on_callback_query}).run_as_thread()
-
-    print('Listening')
-    while True:
-        time.sleep(.1)
+    updater = Updater(token=token)
+    dispatcher = updater.dispatcher
+    text_handler = MessageHandler(
+        Filters.text | Filters.command, callback=text_handler)
+    dispatcher.add_handler(text_handler)
+    query_handler = telegram.ext.CallbackQueryHandler(on_callback_query)
+    dispatcher.add_handler(query_handler)
+    updater.start_polling()
