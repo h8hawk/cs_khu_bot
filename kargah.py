@@ -16,7 +16,7 @@ import datetime
 __location__ = os.path.realpath(
     os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-token = 'xxxxxx'
+token = '435552726:AAGRAabBsahkYJZMbFLwo13vJjEuJGKb7UQ'
 
 #######################################################################################
 # First reply keyboard
@@ -29,7 +29,7 @@ reply_texts_set = {reply_text1, reply_text2}
 start_reply_keyboard = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text=reply_text1)],
     [KeyboardButton(text=reply_text2)]
-])
+], resize_keyboard=True)
 
 
 #######################################################################################
@@ -46,8 +46,7 @@ about_keyboard = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text=about_keyboard_about_khu_cs)],
     [KeyboardButton(text=about_keyboard_list)],
     [KeyboardButton(text=back)]
-]
-)
+], resize_keyboard=True)
 
 #######################################################################################
 # courses inline keyboard. saved in json file
@@ -219,6 +218,7 @@ def on_callback_query(bot: telegram.bot.Bot, update: telegram.update.Update):
 
 
 if __name__ == '__main__':
+    print('main')
     updater = Updater(token=token)
     dispatcher = updater.dispatcher
     text_handler = MessageHandler(
