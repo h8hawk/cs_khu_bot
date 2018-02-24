@@ -37,7 +37,7 @@ start_reply_keyboard = ReplyKeyboardMarkup(keyboard=[
 
 about_keyboard_about_khu_cs = 'توضیح در مورد انجمن'
 about_keyboard_list = 'لیست کارگاه ها'
-back = 'Back'
+back = 'بازگشت ⬅️'
 
 about_keyboard_keys_set = {about_keyboard_about_khu_cs,
                            about_keyboard_list, back}
