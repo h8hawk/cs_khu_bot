@@ -143,7 +143,7 @@ class Verification:
                 chat_id, text=sabtenam_details[0] + ', ' + self._sabtenam_text[-1])
         else:
             bot.send_message(
-                chat_id, text='Dont spam us! you are block from registery!')
+                chat_id, text='Dont spam us! you are blocked from registery!')
 
 
 # iterator functor for registering
