@@ -16,7 +16,7 @@ import datetime
 __location__ = os.path.realpath(
     os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-token = 'xxxxx
+token = '435552726:AAGRAabBsahkYJZMbFLwo13vJjEuJGKb7UQ'
 admin_password = '1234'
 #######################################################################################
 # First reply keyboard
@@ -254,7 +254,7 @@ class Handler:
 
         if chat_id in self._sabtenam_dict:
             if not self._sabtenam_dict[chat_id](text,
-                                                update.message.from_user.first_name + update.message.from_user.last_name):
+                                                update.message.from_user.first_name):
                 self._sabtenam_dict.pop(chat_id)
 
 
