@@ -16,7 +16,7 @@ import datetime
 __location__ = os.path.realpath(
     os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-token = 'xxxxxx'
+token = 'xxxxxxxx'
 admin_password = '1234'
 #######################################################################################
 # First reply keyboard
@@ -38,6 +38,12 @@ start_reply_keyboard = ReplyKeyboardMarkup(keyboard=[
 about_keyboard_about_khu_cs = 'توضیح در مورد انجمن'
 about_keyboard_list = 'لیست کارگاه ها'
 back = 'بازگشت ⬅️'
+
+course_list_text = """
+🔹کارگاه‌های فعال 🔹
+
+لطفا کارگاهی که می‌خواهید در آن ثبت‌نام کنید را از منوی زیر انتخاب نمایید:
+"""
 
 about_keyboard_keys_set = {about_keyboard_about_khu_cs,
                            about_keyboard_list, back}
@@ -230,7 +236,7 @@ class Handler:
 
         elif text == reply_text2:
             self._sequence_verify(chat_id, bot)
-            bot.send_message(chat_id, text='Courses list',
+            bot.send_message(chat_id, text=course_list_text,
                              reply_markup=courses_regiser_keyboard)
 
         # For pressing back
