@@ -16,14 +16,29 @@ import datetime
 __location__ = os.path.realpath(
     os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
+# config telegram bot token and password
 
-token = 'xxxxxxxx'
-admin_password = '1234'
+with open(os.path.join(__location__, 'token.json')) as f:
+    js = json.load(f)
+    token = js['token']
+    admin_password = js['password']
+    f.close()
+
+# Bot Texts
+register_messages = {
+    "desc": "",
+    "name": "نام و نام خانوادگی:",
+    "student_id": "شماره دانشجویی:",
+    "field": "رشته تحصیلی:",
+    "successful": "ثبت نام شما با موفقیت انجام شد.",
+    "fail": "عملیات ثبت نام لغو شد."
+}
+#####
 #######################################################################################
 # First reply keyboard
 
-reply_text1 = "about"
-reply_text2 = "Sabtenam"
+reply_text1 = "درباره انجمن"
+reply_text2 = "ثبت نام در کارگاه"
 
 reply_texts_set = {reply_text1, reply_text2}
 
