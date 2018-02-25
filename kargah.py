@@ -1,8 +1,8 @@
 #@author : h8hawk
-import telepot
-from telepot.namedtuple import InlineKeyboardButton, InlineKeyboardMarkup
-from telepot.namedtuple import KeyboardButton, ReplyKeyboardMarkup
-from telepot.loop import MessageLoop
+
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
+from telegram.ext import MessageHandler, Filters, CommandHandler, CallbackQueryHandler, Updater, Dispatcher
+import telegram
 import sys
 import json
 import os
@@ -10,17 +10,14 @@ import time
 import asyncio
 from tinydb import TinyDB, Query
 from jalali import Gregorian
-from typing import Dict, Callable
+from typing import Dict, Callable, List
 import datetime
 
 __location__ = os.path.realpath(
     os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-token = 'xxxx'
-
-bot = telepot.Bot(token)
-
-
+token = '435552726:AAFBrI6MEtI0oeL9VsNMFVmlM-JOJsRGjaI'
+admin_password = '1234'
 #######################################################################################
 # First reply keyboard
 
@@ -32,7 +29,7 @@ reply_texts_set = {reply_text1, reply_text2}
 start_reply_keyboard = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text=reply_text1)],
     [KeyboardButton(text=reply_text2)]
-])
+], resize_keyboard=True)
 
 
 #######################################################################################
@@ -40,7 +37,13 @@ start_reply_keyboard = ReplyKeyboardMarkup(keyboard=[
 
 about_keyboard_about_khu_cs = 'توضیح در مورد انجمن'
 about_keyboard_list = 'لیست کارگاه ها'
-back = 'Back'
+back = 'بازگشت ⬅️'
+
+course_list_text = """
+🔹کارگاه‌های فعال 🔹
+
+لطفا کارگاهی که می‌خواهید در آن ثبت‌نام کنید را از منوی زیر انتخاب نمایید:
+"""
 
 about_keyboard_keys_set = {about_keyboard_about_khu_cs,
                            about_keyboard_list, back}
@@ -49,8 +52,7 @@ about_keyboard = ReplyKeyboardMarkup(keyboard=[
     [KeyboardButton(text=about_keyboard_about_khu_cs)],
     [KeyboardButton(text=about_keyboard_list)],
     [KeyboardButton(text=back)]
-]
-)
+], resize_keyboard=True)
 
 #######################################################################################
 # courses inline keyboard. saved in json file
@@ -100,144 +102,178 @@ with open(os.path.join(__location__, 'tozih.txt'), 'r') as f:
 #######################################################################################
 # Calback functins
 
-sabtenam_global_dict: Dict[str, Callable[[str], bool]] = dict()
 sabtenam_list = sabtenam_text.split('\n')
+
+# Verfication class for verfying object
+
+
+class Verification:
+    def __init__(self, db: TinyDB):
+        self._second_timers = set()
+        self._third_timers = set()
+        self._block_list = set()
+        self.db = db
+        self._sabtenam_text = sabtenam_list[3:6]
+
+    def _is_verify(self, chat_id)->bool:
+        if chat_id in self._block_list:
+            return False
+        else:
+            return True
+
+    def _append_chat_id(self, chat_id):
+        if chat_id in self._block_list:
+            pass
+        elif chat_id in self._third_timers:
+            self._block_list.add(chat_id)
+        elif chat_id in self._second_timers:
+            self._third_timers.add(chat_id)
+        else:
+            self._second_timers.add(chat_id)
+
+    def sabtenam(self, bot: telegram.bot.Bot, chat_id, sabtenam_details: list, kargah, telegram_name):
+        if self._is_verify(chat_id):
+            db.insert(
+                {
+                    'name': sabtenam_details[0],
+                    'telegram_name': telegram_name,
+                    'snumber': sabtenam_details[1],
+                    'major': sabtenam_details[2],
+                    'kargah': kargah,
+                    'date': Gregorian(str(datetime.date.today())).persian_string(),
+                    'chat_id': chat_id,
+                }
+            )
+            self._append_chat_id(chat_id)
+            bot.send_message(
+                chat_id, text=sabtenam_details[0] + ', ' + self._sabtenam_text[-1])
+        else:
+            bot.send_message(
+                chat_id, text='Dont spam us! you are blocked from registery!')
+
 
 # iterator functor for registering
 
+def sabtenam_iterator(chat_id,
+                      kargah,
+                      bot: telegram.bot.Bot,
+                      verify: Verification) -> Callable[[str], bool]:
 
-def sabtenam_iterator(chat_id, kargah,  bot: telepot.Bot, db=db) -> Callable[[str], bool]:
     current = 0
     sabtenam_text = sabtenam_list[3:6]
     sabtenam_details = list()
 
-    def iterrator(recieved_text: str)->bool:
-        nonlocal db
+    def iterrator(recieved_text: str, telegram_name: str)->bool:
         nonlocal chat_id
         nonlocal bot
         nonlocal current
         if current < len(sabtenam_text) - 1:
-            bot.sendMessage(chat_id, text=sabtenam_text[current])
+            bot.send_message(chat_id, text=sabtenam_text[current])
             current += 1
             sabtenam_details.append(recieved_text)
             return True
         else:
             sabtenam_details.append(recieved_text)
-            db.insert({
-                'name': sabtenam_details[0],
-                'snumber': sabtenam_details[1],
-                'major': sabtenam_details[2],
-                'kargah': kargah,
-                'date': Gregorian(str(datetime.date.today())).persian_string()
-            })
-            bot.sendMessage(
-                chat_id, text=sabtenam_details[0] + ', ' + sabtenam_text[-1])
+            verify.sabtenam(bot, chat_id, sabtenam_details,
+                            kargah, telegram_name)
             return False
     return iterrator
 
-# handler for texts
 
+class Handler:
+    def __init__(self, db: TinyDB):
+        self._verify = Verification(db=db)
+        self._sabtenam_dict: Dict[str, Callable[[str], bool]] = dict()
 
-def text_handler(msg, chat_id):
-    # For /start
-    global sabtenam_global_dict
-    if msg['text'] == '/start':
-        if chat_id in sabtenam_global_dict:
-            sabtenam_global_dict.pop(chat_id)
-            bot.sendMessage(chat_id, sabtenam_list[6])
-        bot.sendMessage(chat_id=chat_id, text='hi',
-                        reply_markup=start_reply_keyboard)
+    def _sequence_verify(self, chat_id, bot: telegram.bot.Bot):
+        if chat_id in self._sabtenam_dict:
+            self._sabtenam_dict.pop(chat_id)
+            bot.send_message(chat_id, text=sabtenam_list[6])
 
-    # For reply_text1 in start_reply_keyboard
-    elif msg['text'] == reply_text1:
-        if chat_id in sabtenam_global_dict:
-            sabtenam_global_dict.pop(chat_id)
-            bot.sendMessage(chat_id, sabtenam_list[6])
-        bot.sendMessage(chat_id, text='About menu',
-                        reply_markup=about_keyboard)
+    # Handler for handling queries .
+    def on_callback_query(self, bot: telegram.bot.Bot, update: telegram.update.Update):
+        self._sabtenam_dict
+        query = update.callback_query
+        chat_id, query_data = query.message.chat_id, query.data
 
-    # For
-    elif msg['text'] == reply_text2:
-        if chat_id in sabtenam_global_dict:
-            sabtenam_global_dict.pop(chat_id)
-            bot.sendMessage(chat_id, sabtenam_list[6])
-        bot.sendMessage(chat_id, text='Courses list',
-                        reply_markup=courses_regiser_keyboard)
+        # This is for showing overviewing courses
+        if query_data in courses_overview_dict:
+            self._sequence_verify(chat_id, bot)
+            bot.send_message(chat_id, text=courses_overview_dict[query_data])
 
-    # For pressing back
-    elif msg['text'] == back:
-        if chat_id in sabtenam_global_dict:
-            sabtenam_global_dict.pop(chat_id)
-            bot.sendMessage(chat_id, sabtenam_list[6])
-        bot.sendMessage(chat_id, text='Menu',
-                        reply_markup=start_reply_keyboard)
+        # This is for registeration
+        elif query_data in courses_register_dict:
+            self._sequence_verify(chat_id, bot)
+            bot.send_message(
+                chat_id, text=sabtenam_list[0] + ' ' + courses_register_dict[query_data] + ' ' + sabtenam_list[1])
+            bot.send_message(chat_id, text=sabtenam_list[2])
+            self._sabtenam_dict[chat_id] = sabtenam_iterator(
+                chat_id, query_data[:-len('register')], bot, self._verify)
 
-    elif msg['text'] == about_keyboard_about_khu_cs:
-        if chat_id in sabtenam_global_dict:
-            sabtenam_global_dict.pop(chat_id)
-            bot.sendMessage(chat_id, sabtenam_list[6])
-        bot.sendMessage(chat_id, text=tozih_text)
+    # handler for texts
+    def text_handler(self, bot: telegram.bot.Bot, update: telegram.update.Update):
+        text = update.message.text
+        chat_id = update.message.chat_id
+        # For /start
+        message: telegram.Message = update.message
+        from_user = message.from_user
+#        print(from_user.first_name)
+#        print(from_user.last_name)
+#        print(from_user.name)
+#        print(from_user.is_bot)
+#        print(from_user.id)
+#        print(from_user.username)
+        if text == '/start':
+            self._sequence_verify(chat_id, bot)
+            bot.send_message(chat_id=chat_id, text='hi',
+                             reply_markup=start_reply_keyboard)
 
-    elif msg['text'] == about_keyboard_list:
-        if chat_id in sabtenam_global_dict:
-            sabtenam_global_dict.pop(chat_id)
-            bot.sendMessage(chat_id, sabtenam_list[6])
-        bot.sendMessage(chat_id, text=about_keyboard_list,
-                        reply_markup=courses_overveiw_keyboard)
+        # For reply_text1 in start_reply_keyboard
+        elif text == reply_text1:
+            self._sequence_verify(chat_id, bot)
+            bot.send_message(chat_id, text='About menu',
+                             reply_markup=about_keyboard)
 
-    if chat_id in sabtenam_global_dict:
-        if not sabtenam_global_dict[chat_id](msg['text']):
-            sabtenam_global_dict.pop(chat_id)
+        elif text == reply_text2:
+            self._sequence_verify(chat_id, bot)
+            bot.send_message(chat_id, text=course_list_text,
+                             reply_markup=courses_regiser_keyboard)
 
-# main handler for messages
+        # For pressing back
+        elif text == back:
+            self._sequence_verify(chat_id, bot)
+            bot.send_message(chat_id, text='Menu',
+                             reply_markup=start_reply_keyboard)
 
+        elif text == about_keyboard_about_khu_cs:
+            self._sequence_verify(chat_id, bot)
+            bot.send_message(chat_id, text=tozih_text)
 
-def handler(msg):
-    print(type(msg))
-    print(msg)
-    print(sabtenam_global_dict)
-    content_type, chat_type, chat_id = telepot.glance(msg)
-    print('message recieved: ', content_type)
-    if content_type == 'text':
-        print(msg, ' \n ,type: ', type(msg))
-        text_handler(msg, chat_id)
-    else:
-        if chat_id in sabtenam_global_dict:
-            sabtenam_global_dict.pop(chat_id)
+        elif text == about_keyboard_list:
+            self._sequence_verify(chat_id, bot)
+            bot.send_message(chat_id, text=about_keyboard_list,
+                             reply_markup=courses_overveiw_keyboard)
 
-# handler for callback queries
+        elif text[-len(admin_password):] == admin_password:
+            bot.send_message(chat_id,
+                             text='\n'.join([i['telegram_name'] for i in db.all()]))
 
-
-def on_callback_query(msg):
-    global sabtenam_global_dict
-    print(sabtenam_global_dict)
-    query_id, from_id, query_data = telepot.glance(
-        msg, flavor='callback_query')
-    print('Callback Query:', query_data)
-    if query_data in courses_overview_dict:
-        if from_id in sabtenam_global_dict:
-            sabtenam_global_dict.pop(from_id)
-            bot.sendMessage(from_id, sabtenam_list[6])
-        print(courses_overview_dict[query_data])
-        bot.sendMessage(from_id, text=courses_overview_dict[query_data])
-    elif query_data in courses_register_dict:
-        if from_id in sabtenam_global_dict:
-            sabtenam_global_dict.pop(from_id)
-            bot.sendMessage(chat_id=from_id, text=sabtenam_list[6])
-        print(courses_register_dict[query_data])
-        bot.sendMessage(
-            from_id, text=sabtenam_list[0] + ' ' + courses_register_dict[query_data] + ' ' + sabtenam_list[1])
-        bot.sendMessage(from_id, text=sabtenam_list[2])
-        sabtenam_global_dict[from_id] = sabtenam_iterator(
-            from_id, query_data[:-len('register')], bot=bot, db=db)
-        print(sabtenam_global_dict)
-    bot.answerCallbackQuery(query_id, text='Got it')
+        if chat_id in self._sabtenam_dict:
+            if not self._sabtenam_dict[chat_id](text,
+                                                update.message.from_user.first_name):
+                self._sabtenam_dict.pop(chat_id)
 
 
 if __name__ == '__main__':
-    MessageLoop(bot, {'chat': handler,
-                      'callback_query': on_callback_query}).run_as_thread()
-
-    print('Listening')
-    while True:
-        time.sleep(.1)
+    print('main')
+    main_handler = Handler(db)
+    updater = Updater(token=token)
+    dispatcher = updater.dispatcher
+    text_handler = MessageHandler(
+        Filters.text | Filters.command, callback=main_handler.text_handler)
+    dispatcher.add_handler(text_handler)
+    # Query handler
+    query_handler = telegram.ext.CallbackQueryHandler(
+        main_handler.on_callback_query)
+    dispatcher.add_handler(query_handler)
+    updater.start_polling()
