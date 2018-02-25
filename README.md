@@ -5,6 +5,6 @@ Requirments:
 
 Python3.6
 
-telepot
+[python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot)
 
-tinydb
+[tinydb](https://github.com/msiemens/tinydb)
