@@ -97,13 +97,13 @@ user = Query()
 #######################################################################################
 
 
-with open(os.path.join(__location__, 'tozih.txt'), 'r') as f:
+with open(os.path.join(__location__, 'messages','about_us.txt'), 'r') as f:
     tozih_text: str = f.read()
     f.close()
 
 #######################################################################################
 # Calback functins
-with open(os.path.join(__location__, 'sabtenam.json')) as f:
+with open(os.path.join(__location__, 'messages','sabtenam.json')) as f:
     sabtenam_list = json.load(f, strict=False)
     f.close()
 
