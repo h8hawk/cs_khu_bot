@@ -16,7 +16,8 @@ import datetime
 __location__ = os.path.realpath(
     os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
-token = '435552726:AAFBrI6MEtI0oeL9VsNMFVmlM-JOJsRGjaI'
+
+token = 'xxxxxxxx'
 admin_password = '1234'
 #######################################################################################
 # First reply keyboard
