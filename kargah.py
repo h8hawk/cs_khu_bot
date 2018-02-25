@@ -101,13 +101,13 @@ user = Query()
 #######################################################################################
 
 
-with open(os.path.join(__location__, 'tozih.txt'), 'r') as f:
+with open(os.path.join(__location__, 'messages','about_us.txt'), 'r') as f:
     tozih_text: str = f.read()
     f.close()
 
 #######################################################################################
 # Calback functins
-with open(os.path.join(__location__, 'sabtenam.json')) as f:
+with open(os.path.join(__location__, 'messages','sabtenam.json')) as f:
     sabtenam_list = json.load(f, strict=False)
     f.close()
 
@@ -221,7 +221,9 @@ class Handler:
         elif query_data in courses_register_dict:
             self._sequence_verify(chat_id, bot)
             bot.send_message(
-                chat_id, text=sabtenam_list[0] + ' ' + courses_register_dict[query_data] + ' ' + sabtenam_list[1])
+                chat_id,
+                text=sabtenam_list[0] + courses_register_dict[query_data] + sabtenam_list[1],
+                parse_mode=telegram.ParseMode.HTML)
             bot.send_message(chat_id, text=sabtenam_list[2])
             self._sabtenam_dict[chat_id] = sabtenam_iterator(
                 chat_id, query_data[:-len('register')], bot, self._verify)
