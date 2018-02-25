@@ -26,14 +26,14 @@ with open(os.path.join(__location__, 'token.json')) as f:
 
 # Bot Texts
 register_messages = {
-    "desc": "",
+    "desc": "👤 برای ثبت نام در کارگاه x اطلاعات خود را وارد کنید.",
     "name": "نام و نام خانوادگی:",
     "student_id": "شماره دانشجویی:",
     "field": "رشته تحصیلی:",
     "successful": "ثبت نام شما با موفقیت انجام شد.",
     "fail": "عملیات ثبت نام لغو شد."
 }
-#####
+
 #######################################################################################
 # First reply keyboard
 
@@ -43,8 +43,8 @@ reply_text2 = "ثبت نام در کارگاه"
 reply_texts_set = {reply_text1, reply_text2}
 
 start_reply_keyboard = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text=reply_text1)],
-    [KeyboardButton(text=reply_text2)]
+    [KeyboardButton(text=reply_text2)],
+    [KeyboardButton(text=reply_text1)]
 ], resize_keyboard=True)
 
 
