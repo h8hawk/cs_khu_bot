@@ -37,6 +37,10 @@ start_reply_keyboard = ReplyKeyboardMarkup(keyboard=[
 ], resize_keyboard=True)
 
 
+numeric_error = """
+شماره دانشجویی اشتباه وارد شده است
+"""
+
 #######################################################################################
 # reply keyboard about : dar morede
 
@@ -134,22 +138,31 @@ class Verification:
         else:
             self._second_timers.add(chat_id)
 
+    def _sname_validation(self, snumber: str):
+        if snumber.isnumeric() and len(snumber) == 9 and snumber[0] == '9':
+            return True
+        else:
+            return False
+
     def sabtenam(self, bot: telegram.bot.Bot, chat_id, sabtenam_details: list, kargah, telegram_name):
         if self._is_verify(chat_id):
-            db.insert(
-                {
-                    'name': sabtenam_details[0],
-                    'telegram_name': telegram_name,
-                    'snumber': sabtenam_details[1],
-                    'major': sabtenam_details[2],
-                    'kargah': kargah,
-                    'date': Gregorian(str(datetime.date.today())).persian_string(),
-                    'chat_id': chat_id,
-                }
-            )
-            self._append_chat_id(chat_id)
-            bot.send_message(
-                chat_id, text=sabtenam_details[0] + ', ' + self._sabtenam_text[-1])
+            if self._sname_validation(sabtenam_details[1].replace(' ', '')):
+                db.insert(
+                    {
+                        'name': sabtenam_details[0],
+                        'telegram_name': telegram_name,
+                        'snumber': sabtenam_details[1],
+                        'major': sabtenam_details[2],
+                        'kargah': kargah,
+                        'date': Gregorian(str(datetime.date.today())).persian_string(),
+                        'chat_id': chat_id,
+                    }
+                )
+                self._append_chat_id(chat_id)
+                bot.send_message(
+                    chat_id, text=sabtenam_details[0] + ', ' + self._sabtenam_text[-1])
+            else:
+                bot.send_message(chat_id, text=numeric_error)
         else:
             bot.send_message(
                 chat_id, text='Dont spam us! you are blocked from registery!')
