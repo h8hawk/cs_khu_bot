@@ -208,7 +208,9 @@ class Handler:
         elif query_data in courses_register_dict:
             self._sequence_verify(chat_id, bot)
             bot.send_message(
-                chat_id, text=sabtenam_list[0] + ' ' + courses_register_dict[query_data] + ' ' + sabtenam_list[1])
+                chat_id,
+                text=sabtenam_list[0] + courses_register_dict[query_data] + sabtenam_list[1],
+                parse_mode=telegram.ParseMode.HTML)
             bot.send_message(chat_id, text=sabtenam_list[2])
             self._sabtenam_dict[chat_id] = sabtenam_iterator(
                 chat_id, query_data[:-len('register')], bot, self._verify)
