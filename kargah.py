@@ -24,15 +24,7 @@ with open(os.path.join(__location__, 'token.json')) as f:
     admin_password = js['password']
     f.close()
 
-# Bot Texts
-register_messages = {
-    "desc": "",
-    "name": "نام و نام خانوادگی:",
-    "student_id": "شماره دانشجویی:",
-    "field": "رشته تحصیلی:",
-    "successful": "ثبت نام شما با موفقیت انجام شد.",
-    "fail": "عملیات ثبت نام لغو شد."
-}
+
 #####
 #######################################################################################
 # First reply keyboard
@@ -107,9 +99,6 @@ user = Query()
 
 #######################################################################################
 
-with open(os.path.join(__location__, 'sabtenam.txt'), 'r') as f:
-    sabtenam_text: str = f.read()
-    f.close()
 
 with open(os.path.join(__location__, 'tozih.txt'), 'r') as f:
     tozih_text: str = f.read()
@@ -117,8 +106,9 @@ with open(os.path.join(__location__, 'tozih.txt'), 'r') as f:
 
 #######################################################################################
 # Calback functins
-
-sabtenam_list = sabtenam_text.split('\n')
+with open(os.path.join(__location__, 'sabtenam.json')) as f:
+    sabtenam_list = json.load(f, strict=False)
+    f.close()
 
 # Verfication class for verfying object
 
