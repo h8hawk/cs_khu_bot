@@ -24,9 +24,6 @@ with open(os.path.join(__location__, 'token.json')) as f:
     admin_password = js['password']
     f.close()
 
-
-#####
-#######################################################################################
 # First reply keyboard
 
 reply_text1 = "درباره انجمن"
@@ -35,8 +32,8 @@ reply_text2 = "ثبت نام در کارگاه"
 reply_texts_set = {reply_text1, reply_text2}
 
 start_reply_keyboard = ReplyKeyboardMarkup(keyboard=[
-    [KeyboardButton(text=reply_text1)],
-    [KeyboardButton(text=reply_text2)]
+    [KeyboardButton(text=reply_text2)],
+    [KeyboardButton(text=reply_text1)]
 ], resize_keyboard=True)
 
 
